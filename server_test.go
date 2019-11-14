@@ -8,12 +8,29 @@ import (
 	"testing"
 )
 
+type StubExpenseStore struct {
+	users map[int]User
+}
+
+func (s *StubExpenseStore) GetUser(id int) User {
+	user := s.users[id]
+	return user
+}
+
 func TestGETUser(t *testing.T) {
+
+	store := StubExpenseStore{map[int]User{
+		1: {1, "Jane", "Doe", "jane.doe@example.com"},
+		2: {2, "Spencer", "White", "spencer.white@example.com"},
+	}}
+
+	server := ExpenseServer{&store}
+
 	t.Run("returns Jane's information as JSON", func(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/users/1", nil)
 		response := httptest.NewRecorder()
 
-		ExpenseServer(response, request)
+		server.ServeHTTP(response, request)
 
 		got := getUserFromResponse(t, response)
 		want := User{UserID: 1, FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com"}
@@ -27,7 +44,7 @@ func TestGETUser(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/users/2", nil)
 		response := httptest.NewRecorder()
 
-		ExpenseServer(response, request)
+		server.ServeHTTP(response, request)
 
 		got := getUserFromResponse(t, response)
 		want := User{UserID: 2, FirstName: "Spencer", LastName: "White", Email: "spencer.white@example.com"}

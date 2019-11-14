@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -16,20 +18,31 @@ type User struct {
 	Email     string `json:"email"`
 }
 
+// ExpenseStore stores all expense related information about the users
+type ExpenseStore interface {
+	GetUser(id int) User
+}
+
 // ExpenseServer is an HTTP interface for Expense Tracking
-func ExpenseServer(w http.ResponseWriter, r *http.Request) {
-	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+type ExpenseServer struct {
+	store ExpenseStore
+}
+
+func (es *ExpenseServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	userIDString := strings.TrimPrefix(r.URL.Path, "/users/")
 
 	w.Header().Set("content-type", contentTypeJSON)
 	enc := json.NewEncoder(w)
 
-	if userID == "1" {
-		enc.Encode(User{1, "Jane", "Doe", "jane.doe@example.com"})
+	userID, err := strconv.Atoi(userIDString)
+
+	if err != nil {
+		log.Printf("couldn't get UserID from URL path: '%v'", err)
 		return
 	}
 
-	if userID == "2" {
-		enc.Encode(User{2, "Spencer", "White", "spencer.white@example.com"})
-	}
+	user := es.store.GetUser(userID)
+
+	enc.Encode(user)
 
 }
