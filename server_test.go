@@ -22,6 +22,20 @@ func TestGETUser(t *testing.T) {
 		assertContentType(t, response, contentTypeJSON)
 
 	})
+
+	t.Run("returns Spencer's information as JSON", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/users/2", nil)
+		response := httptest.NewRecorder()
+
+		ExpenseServer(response, request)
+
+		got := getUserFromResponse(t, response)
+		want := User{UserID: 2, FirstName: "Spencer", LastName: "White", Email: "spencer.white@example.com"}
+
+		assertUser(t, got, want)
+		assertContentType(t, response, contentTypeJSON)
+
+	})
 }
 
 func getUserFromResponse(t *testing.T, response *httptest.ResponseRecorder) User {

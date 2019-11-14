@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 const contentTypeJSON = "application/json"
@@ -17,7 +18,18 @@ type User struct {
 
 // ExpenseServer is an HTTP interface for Expense Tracking
 func ExpenseServer(w http.ResponseWriter, r *http.Request) {
+	userID := strings.TrimPrefix(r.URL.Path, "/users/")
+
 	w.Header().Set("content-type", contentTypeJSON)
 	enc := json.NewEncoder(w)
-	enc.Encode(User{1, "Jane", "Doe", "jane.doe@example.com"})
+
+	if userID == "1" {
+		enc.Encode(User{1, "Jane", "Doe", "jane.doe@example.com"})
+		return
+	}
+
+	if userID == "2" {
+		enc.Encode(User{2, "Spencer", "White", "spencer.white@example.com"})
+	}
+
 }
