@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -27,7 +28,7 @@ func TestGETUser(t *testing.T) {
 	server := ExpenseServer{&store}
 
 	t.Run("returns Jane's information as JSON", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/users/1", nil)
+		request := newGetUserRequest(1)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -41,7 +42,7 @@ func TestGETUser(t *testing.T) {
 	})
 
 	t.Run("returns Spencer's information as JSON", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/users/2", nil)
+		request := newGetUserRequest(2)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -53,6 +54,11 @@ func TestGETUser(t *testing.T) {
 		assertContentType(t, response, contentTypeJSON)
 
 	})
+}
+
+func newGetUserRequest(id int) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%d", id), nil)
+	return req
 }
 
 func getUserFromResponse(t *testing.T, response *httptest.ResponseRecorder) User {

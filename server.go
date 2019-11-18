@@ -29,6 +29,13 @@ type ExpenseServer struct {
 }
 
 func (es *ExpenseServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		es.retrieveUser(w, r)
+	}
+}
+
+func (es *ExpenseServer) retrieveUser(w http.ResponseWriter, r *http.Request) {
 	userIDString := strings.TrimPrefix(r.URL.Path, "/users/")
 
 	w.Header().Set("content-type", contentTypeJSON)
