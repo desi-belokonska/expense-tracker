@@ -55,6 +55,7 @@ func (es *ExpenseServer) retrieveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.WriteHeader(http.StatusOK)
 	enc.Encode(user)
 
 }
