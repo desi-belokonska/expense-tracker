@@ -10,17 +10,17 @@ import (
 )
 
 type StubExpenseStore struct {
-	users map[int]User
+	users map[int]*User
 }
 
-func (s *StubExpenseStore) GetUser(id int) User {
+func (s *StubExpenseStore) GetUser(id int) *User {
 	user := s.users[id]
 	return user
 }
 
 func TestGETUser(t *testing.T) {
 
-	store := StubExpenseStore{map[int]User{
+	store := StubExpenseStore{map[int]*User{
 		1: {1, "Jane", "Doe", "jane.doe@example.com"},
 		2: {2, "Spencer", "White", "spencer.white@example.com"},
 	}}
@@ -53,6 +53,20 @@ func TestGETUser(t *testing.T) {
 		assertUser(t, got, want)
 		assertContentType(t, response, contentTypeJSON)
 
+	})
+
+	t.Run("returns 404 on missing user", func(t *testing.T) {
+		request := newGetUserRequest(10)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		got := response.Code
+		want := http.StatusNotFound
+
+		if got != want {
+			t.Errorf("response did not have correct HTTP code: got %d, want %d", got, want)
+		}
 	})
 }
 

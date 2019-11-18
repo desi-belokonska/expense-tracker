@@ -20,7 +20,7 @@ type User struct {
 
 // ExpenseStore stores all expense related information about the users
 type ExpenseStore interface {
-	GetUser(id int) User
+	GetUser(id int) *User
 }
 
 // ExpenseServer is an HTTP interface for Expense Tracking
@@ -49,6 +49,11 @@ func (es *ExpenseServer) retrieveUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := es.store.GetUser(userID)
+
+	if user == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	enc.Encode(user)
 

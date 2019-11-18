@@ -15,9 +15,8 @@ type ExpenseStoreSQL struct {
 }
 
 // GetUser queries the database for a user and returns it if it's found
-func (es *ExpenseStoreSQL) GetUser(id int) User {
-
-	var user User
+func (es *ExpenseStoreSQL) GetUser(id int) *User {
+	var user *User
 
 	rows, err := es.Query("SELECT * FROM users WHERE user_id = ?", id)
 
@@ -36,9 +35,8 @@ func (es *ExpenseStoreSQL) GetUser(id int) User {
 		if err = rows.Scan(&userID, &firstName, &lastName, &email); err != nil {
 			log.Fatalln(err)
 		}
+		user = &User{userID, firstName, lastName, email}
 	}
-
-	user = User{userID, firstName, lastName, email}
 
 	return user
 }
