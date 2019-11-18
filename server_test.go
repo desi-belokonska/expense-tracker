@@ -38,6 +38,7 @@ func TestGETUser(t *testing.T) {
 
 		assertUser(t, got, want)
 		assertContentType(t, response, contentTypeJSON)
+		assertStatusCode(t, response.Code, http.StatusOK)
 
 	})
 
@@ -52,6 +53,7 @@ func TestGETUser(t *testing.T) {
 
 		assertUser(t, got, want)
 		assertContentType(t, response, contentTypeJSON)
+		assertStatusCode(t, response.Code, http.StatusOK)
 
 	})
 
@@ -61,12 +63,7 @@ func TestGETUser(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		got := response.Code
-		want := http.StatusNotFound
-
-		if got != want {
-			t.Errorf("response did not have correct HTTP code: got %d, want %d", got, want)
-		}
+		assertStatusCode(t, response.Code, http.StatusNotFound)
 	})
 }
 
@@ -95,6 +92,12 @@ func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want s
 
 	if got != want {
 		t.Errorf("response did not have correct content-type: got %q, want %q", got, want)
+	}
+}
+
+func assertStatusCode(t *testing.T, got, want int) {
+	if got != want {
+		t.Errorf("response did not have correct status code: got %d, want %d", got, want)
 	}
 }
 

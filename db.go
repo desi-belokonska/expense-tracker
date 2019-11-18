@@ -14,7 +14,7 @@ type ExpenseStoreSQL struct {
 	*sql.DB
 }
 
-// GetUser queries the database for a user and returns it if it's found
+// GetUser queries the database for a user and returns it if it's found, nil otherwise
 func (es *ExpenseStoreSQL) GetUser(id int) *User {
 	var user *User
 
@@ -41,18 +41,12 @@ func (es *ExpenseStoreSQL) GetUser(id int) *User {
 	return user
 }
 
-// NewExpenseStoreSQL returns a pointer to an initializes ExpenseStoreSQL
+// NewExpenseStoreSQL returns a pointer to an initialized ExpenseStoreSQL
 func NewExpenseStoreSQL() (*ExpenseStoreSQL, error) {
 	e := ExpenseStoreSQL{}
 
 	db, err := sql.Open("sqlite3", "./db/expense-tracker.db")
 	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		log.Println("failed")
 		return nil, err
 	}
 
