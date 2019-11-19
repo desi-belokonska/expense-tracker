@@ -12,23 +12,29 @@ If you don't have them yet, install [golang](https://golang.org/dl/) and [sqlite
 
 ### Development
 
-Clone the project (preferrably in your `$GOPATH/src/github.com/<your-username>`)
+Clone the project (preferrably in your `$GOPATH/src/github.com/<your-username>`):
 
 ``` sh
 git clone https://github.com/desi-belokonska/expense-tracker
 ```
 
-Install dependencies
+Install dependencies:
 
 ``` sh
 cd expense-tracker
 go get
 ```
 
+Seed initial data (optional):
+
+```sh
+./run-seed.sh
+```
+
 There is a startup script which simplifies the development process:
 
 ``` sh
-./start.sh
+./run-start.sh
 ```
 
 If everything went right, you should see this in your terminal window:
