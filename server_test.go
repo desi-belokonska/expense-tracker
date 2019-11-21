@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+// ==== Mocks/Stubs/Spies
+
 type StubExpenseStore struct {
 	users  map[int]*User
 	nextID int
@@ -19,7 +21,49 @@ func (s *StubExpenseStore) GetUser(id int) *User {
 	return user
 }
 
-func TestGETUser(t *testing.T) {
+// ==== Tests
+
+func TestGETUserSuccess(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		userID     int
+		wantedUser User
+	}{
+		{
+			desc:       "returns Jane's information as JSON",
+			userID:     1,
+			wantedUser: User{UserID: 1, FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com"},
+		},
+		{
+			desc:       "returns Spencer's information as JSON",
+			userID:     2,
+			wantedUser: User{UserID: 2, FirstName: "Spencer", LastName: "White", Email: "spencer.white@example.com"},
+		},
+	}
+	store := StubExpenseStore{map[int]*User{
+		1: {1, "Jane", "Doe", "jane.doe@example.com"},
+		2: {2, "Spencer", "White", "spencer.white@example.com"},
+	}, 3}
+
+	server := ExpenseServer{&store}
+
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			request := newGetUserRequest(tC.userID)
+			response := httptest.NewRecorder()
+
+			server.ServeHTTP(response, request)
+
+			got := getUserFromResponse(t, response)
+
+			assertUser(t, got, tC.wantedUser)
+			assertContentType(t, response, contentTypeJSON)
+			assertStatusCode(t, response.Code, http.StatusOK)
+		})
+	}
+}
+
+func TestGETUserFailure(t *testing.T) {
 
 	store := StubExpenseStore{map[int]*User{
 		1: {1, "Jane", "Doe", "jane.doe@example.com"},
@@ -28,37 +72,7 @@ func TestGETUser(t *testing.T) {
 
 	server := ExpenseServer{&store}
 
-	t.Run("returns Jane's information as JSON", func(t *testing.T) {
-		request := newGetUserRequest(1)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		got := getUserFromResponse(t, response)
-		want := User{UserID: 1, FirstName: "Jane", LastName: "Doe", Email: "jane.doe@example.com"}
-
-		assertUser(t, got, want)
-		assertContentType(t, response, contentTypeJSON)
-		assertStatusCode(t, response.Code, http.StatusOK)
-
-	})
-
-	t.Run("returns Spencer's information as JSON", func(t *testing.T) {
-		request := newGetUserRequest(2)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		got := getUserFromResponse(t, response)
-		want := User{UserID: 2, FirstName: "Spencer", LastName: "White", Email: "spencer.white@example.com"}
-
-		assertUser(t, got, want)
-		assertContentType(t, response, contentTypeJSON)
-		assertStatusCode(t, response.Code, http.StatusOK)
-
-	})
-
-	t.Run("returns 404 on missing user", func(t *testing.T) {
+	t.Run("returns 404 and an error on missing user", func(t *testing.T) {
 		request := newGetUserRequest(10)
 		response := httptest.NewRecorder()
 
@@ -72,6 +86,8 @@ func TestGETUser(t *testing.T) {
 		assertStatusCode(t, response.Code, http.StatusNotFound)
 	})
 }
+
+// ==== heplers
 
 func newGetUserRequest(id int) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%d", id), nil)
@@ -103,6 +119,8 @@ func getErrorFromResponse(t *testing.T, response *httptest.ResponseRecorder) Err
 
 	return errorJSON
 }
+
+// ==== assert helpers
 
 func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want string) {
 	t.Helper()
