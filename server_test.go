@@ -45,7 +45,7 @@ func TestGETUserSuccess(t *testing.T) {
 		2: {2, "Spencer", "White", "spencer.white@example.com"},
 	}, 3}
 
-	server := ExpenseServer{&store}
+	server := NewExpenseServer(&store)
 
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestGETUserFailure(t *testing.T) {
 		2: {2, "Spencer", "White", "spencer.white@example.com"},
 	}, 3}
 
-	server := ExpenseServer{&store}
+	server := NewExpenseServer(&store)
 
 	t.Run("returns 404 and an error on missing user", func(t *testing.T) {
 		request := newGetUserRequest(10)
@@ -133,6 +133,8 @@ func assertContentType(t *testing.T, response *httptest.ResponseRecorder, want s
 }
 
 func assertStatusCode(t *testing.T, got, want int) {
+	t.Helper()
+
 	if got != want {
 		t.Errorf("response did not have correct status code: got %d, want %d", got, want)
 	}

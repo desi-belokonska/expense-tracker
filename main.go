@@ -18,8 +18,8 @@ func main() {
 		port = "5000"
 	}
 
-	server := ExpenseServer{store}
-	loggedServer := Logger(&server)
+	server := NewExpenseServer(store)
+	loggedServer := Logger(server)
 	fmt.Printf("Listening on port: %v\t(http://localhost:%v)\n", port, port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), loggedServer); err != nil {
 		log.Fatalf("could not listen on port %v %v", port, err)

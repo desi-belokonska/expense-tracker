@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 const contentTypeJSON = "application/json"
@@ -27,22 +28,30 @@ type ExpenseStore interface {
 // ExpenseServer is an HTTP interface for Expense Tracking
 type ExpenseServer struct {
 	store ExpenseStore
+	http.Handler
 }
 
-func (es *ExpenseServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		es.retrieveUser(w, r)
-	}
+// NewExpenseServer returs a pointer to a new ExpenseServer with the given store
+func NewExpenseServer(store ExpenseStore) *ExpenseServer {
+	e := new(ExpenseServer)
+
+	e.store = store
+
+	router := mux.NewRouter()
+	router.HandleFunc("/users/{userID}", http.HandlerFunc(e.usersHandler))
+
+	e.Handler = router
+
+	return e
 }
 
-func (es *ExpenseServer) retrieveUser(w http.ResponseWriter, r *http.Request) {
-	userIDString := strings.TrimPrefix(r.URL.Path, "/users/")
+func (es *ExpenseServer) usersHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userIDString := vars["userID"]
+	userID, err := strconv.Atoi(userIDString)
 
 	w.Header().Set("content-type", contentTypeJSON)
 	enc := json.NewEncoder(w)
-
-	userID, err := strconv.Atoi(userIDString)
 
 	if err != nil {
 		log.Printf("couldn't get UserID from URL path: '%v'", err)
