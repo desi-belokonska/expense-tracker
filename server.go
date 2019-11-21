@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,6 +46,9 @@ func (es *ExpenseServer) retrieveUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Printf("couldn't get UserID from URL path: '%v'", err)
+		w.WriteHeader(http.StatusNotFound)
+		errorJSON := CreateErrorNotFound(fmt.Sprintf("Couldn't get UserID from URL path: %v", userIDString))
+		enc.Encode(errorJSON)
 		return
 	}
 
@@ -52,6 +56,8 @@ func (es *ExpenseServer) retrieveUser(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
+		errorJSON := CreateErrorNotFound(fmt.Sprintf("Requested user %v not found.", userID))
+		enc.Encode(errorJSON)
 		return
 	}
 
