@@ -9,7 +9,7 @@ import (
 
 const dir = "./db.json"
 
-// ExpenseStoreSQL is an implementaton of ExpenceStore in sqlite3
+// ExpenseStoreSQL is an implementaton of ExpenseStore in sqlite3
 type ExpenseStoreSQL struct {
 	*sql.DB
 }
