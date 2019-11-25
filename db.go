@@ -41,6 +41,33 @@ func (es *ExpenseStoreSQL) GetUser(id int) *User {
 	return user
 }
 
+// GetUsers queries the database for all users and returns them if it's found, nil otherwise
+func (es *ExpenseStoreSQL) GetUsers() *SliceResponse {
+	ur := &SliceResponse{Users: []User{}}
+
+	rows, err := es.Query("SELECT * FROM users ORDER BY user_id")
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	var (
+		userID    int64
+		firstName string
+		lastName  string
+		email     string
+	)
+
+	for rows.Next() {
+		if err = rows.Scan(&userID, &firstName, &lastName, &email); err != nil {
+			log.Fatalln(err)
+		}
+		ur.Users = append(ur.Users, User{userID, firstName, lastName, email})
+	}
+
+	return ur
+}
+
 // NewExpenseStoreSQL returns a pointer to an initialized ExpenseStoreSQL
 func NewExpenseStoreSQL() (*ExpenseStoreSQL, error) {
 	e := ExpenseStoreSQL{}

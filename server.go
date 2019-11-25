@@ -20,9 +20,17 @@ type User struct {
 	Email     string `json:"email"`
 }
 
+// SliceResponse contains a slice of User to return as JSON
+// SliceResponse needs to be a struct because returning arrays in JSON can be problematic
+// (see: https://haacked.com/archive/2009/06/25/json-hijacking.aspx/)
+type SliceResponse struct {
+	Users []User `json:"users"`
+}
+
 // ExpenseStore stores all expense related information about the users
 type ExpenseStore interface {
 	GetUser(id int) *User
+	GetUsers() *SliceResponse
 }
 
 // ExpenseServer is an HTTP interface for Expense Tracking
@@ -38,20 +46,32 @@ func NewExpenseServer(store ExpenseStore) *ExpenseServer {
 	e.store = store
 
 	router := mux.NewRouter()
-	router.HandleFunc("/users/{userID}", http.HandlerFunc(e.usersHandler))
+
+	router.HandleFunc("/users", e.usersHandler)
+	router.HandleFunc("/users/{userID}", e.userHandler)
 
 	e.Handler = router
 
 	return e
 }
-
 func (es *ExpenseServer) usersHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userIDString := vars["userID"]
-	userID, err := strconv.Atoi(userIDString)
-
 	w.Header().Set("content-type", contentTypeJSON)
 	enc := json.NewEncoder(w)
+
+	userResponse := es.store.GetUsers()
+
+	w.WriteHeader(http.StatusOK)
+	enc.Encode(userResponse)
+}
+
+func (es *ExpenseServer) userHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", contentTypeJSON)
+	enc := json.NewEncoder(w)
+
+	vars := mux.Vars(r)
+	userIDString := vars["userID"]
+
+	userID, err := strconv.Atoi(userIDString)
 
 	if err != nil {
 		log.Printf("couldn't get UserID from URL path: '%v'", err)

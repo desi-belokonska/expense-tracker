@@ -12,13 +12,22 @@ import (
 // ==== Mocks/Stubs/Spies
 
 type StubExpenseStore struct {
-	users  map[int]*User
+	users  []User
 	nextID int
 }
 
 func (s *StubExpenseStore) GetUser(id int) *User {
-	user := s.users[id]
-	return user
+	for _, user := range s.users {
+		if user.UserID == int64(id) {
+			return &user
+		}
+	}
+	return nil
+}
+
+func (s *StubExpenseStore) GetUsers() *SliceResponse {
+
+	return &SliceResponse{s.users}
 }
 
 // ==== Tests
@@ -40,9 +49,9 @@ func TestGETUserSuccess(t *testing.T) {
 			wantedUser: User{UserID: 2, FirstName: "Spencer", LastName: "White", Email: "spencer.white@example.com"},
 		},
 	}
-	store := StubExpenseStore{map[int]*User{
-		1: {1, "Jane", "Doe", "jane.doe@example.com"},
-		2: {2, "Spencer", "White", "spencer.white@example.com"},
+	store := StubExpenseStore{[]User{
+		{1, "Jane", "Doe", "jane.doe@example.com"},
+		{2, "Spencer", "White", "spencer.white@example.com"},
 	}, 3}
 
 	server := NewExpenseServer(&store)
@@ -65,9 +74,9 @@ func TestGETUserSuccess(t *testing.T) {
 
 func TestGETUserFailure(t *testing.T) {
 
-	store := StubExpenseStore{map[int]*User{
-		1: {1, "Jane", "Doe", "jane.doe@example.com"},
-		2: {2, "Spencer", "White", "spencer.white@example.com"},
+	store := StubExpenseStore{[]User{
+		{1, "Jane", "Doe", "jane.doe@example.com"},
+		{2, "Spencer", "White", "spencer.white@example.com"},
 	}, 3}
 
 	server := NewExpenseServer(&store)
@@ -84,6 +93,32 @@ func TestGETUserFailure(t *testing.T) {
 		assertError(t, got, want)
 		assertContentType(t, response, contentTypeJSON)
 		assertStatusCode(t, response.Code, http.StatusNotFound)
+	})
+}
+
+func TestGETUsers(t *testing.T) {
+	store := StubExpenseStore{[]User{
+		{1, "Jane", "Doe", "jane.doe@example.com"},
+		{2, "Spencer", "White", "spencer.white@example.com"},
+	}, 3}
+
+	server := NewExpenseServer(&store)
+
+	t.Run("returns list of users as JSON", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/users", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		got := getUsersFromResponse(t, response)
+		want := []User{
+			{1, "Jane", "Doe", "jane.doe@example.com"},
+			{2, "Spencer", "White", "spencer.white@example.com"},
+		}
+
+		assertUsers(t, got, want)
+		assertContentType(t, response, contentTypeJSON)
+		assertStatusCode(t, response.Code, http.StatusOK)
 	})
 }
 
@@ -105,6 +140,20 @@ func getUserFromResponse(t *testing.T, response *httptest.ResponseRecorder) User
 	}
 
 	return user
+}
+
+func getUsersFromResponse(t *testing.T, response *httptest.ResponseRecorder) []User {
+	t.Helper()
+
+	resJSON := SliceResponse{[]User{}}
+
+	err := json.NewDecoder(response.Body).Decode(&resJSON)
+
+	if err != nil {
+		t.Errorf("couldn't decode JSON into Users: response body - %q, '%v'", response.Body, err)
+	}
+
+	return resJSON.Users
 }
 
 func getErrorFromResponse(t *testing.T, response *httptest.ResponseRecorder) ErrorJSON {
@@ -145,6 +194,14 @@ func assertUser(t *testing.T, got, want User) {
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Wrong User: got %q, want %q", got, want)
+	}
+}
+
+func assertUsers(t *testing.T, got, want []User) {
+	t.Helper()
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("Wrong Users: got %q, want %q", got, want)
 	}
 }
 
