@@ -29,8 +29,9 @@ type SliceResponse struct {
 
 // ExpenseStore stores all expense related information about the users
 type ExpenseStore interface {
-	GetUser(id int) *User
+	GetUser(id int64) *User
 	GetUsers() *SliceResponse
+	CreateUser(user User) *User
 }
 
 // ExpenseServer is an HTTP interface for Expense Tracking
@@ -55,6 +56,16 @@ func NewExpenseServer(store ExpenseStore) *ExpenseServer {
 	return e
 }
 func (es *ExpenseServer) usersHandler(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case http.MethodGet:
+		es.getUsers(w, r)
+	case http.MethodPost:
+		es.postUsers(w, r)
+	}
+}
+
+func (es *ExpenseServer) getUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", contentTypeJSON)
 	enc := json.NewEncoder(w)
 
@@ -62,6 +73,29 @@ func (es *ExpenseServer) usersHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	enc.Encode(userResponse)
+}
+
+func (es *ExpenseServer) postUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", contentTypeJSON)
+	enc := json.NewEncoder(w)
+	dec := json.NewDecoder(r.Body)
+
+	var newUser User
+
+	err := dec.Decode(&newUser)
+
+	if err != nil {
+		log.Printf("problem with POST /users: '%v'", err)
+		w.WriteHeader(http.StatusNotFound)
+		errorJSON := CreateErrorInvalidInput("Couldn't create a new user from input.", nil)
+		enc.Encode(errorJSON)
+		return
+	}
+
+	user := es.store.CreateUser(newUser)
+
+	w.WriteHeader(http.StatusOK)
+	enc.Encode(user)
 }
 
 func (es *ExpenseServer) userHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +115,7 @@ func (es *ExpenseServer) userHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := es.store.GetUser(userID)
+	user := es.store.GetUser(int64(userID))
 
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)

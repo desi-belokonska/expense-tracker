@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,12 +14,12 @@ import (
 
 type StubExpenseStore struct {
 	users  []User
-	nextID int
+	nextID int64
 }
 
-func (s *StubExpenseStore) GetUser(id int) *User {
+func (s *StubExpenseStore) GetUser(id int64) *User {
 	for _, user := range s.users {
-		if user.UserID == int64(id) {
+		if user.UserID == id {
 			return &user
 		}
 	}
@@ -26,8 +27,14 @@ func (s *StubExpenseStore) GetUser(id int) *User {
 }
 
 func (s *StubExpenseStore) GetUsers() *SliceResponse {
-
 	return &SliceResponse{s.users}
+}
+
+func (s *StubExpenseStore) CreateUser(user User) *User {
+	user.UserID = int64(s.nextID)
+	s.users = append(s.users)
+	s.nextID++
+	return &user
 }
 
 // ==== Tests
@@ -96,6 +103,37 @@ func TestGETUserFailure(t *testing.T) {
 	})
 }
 
+func TestPOSTUsers(t *testing.T) {
+	store := StubExpenseStore{[]User{
+		{1, "Jane", "Doe", "jane.doe@example.com"},
+		{2, "Spencer", "White", "spencer.white@example.com"},
+	}, 3}
+
+	server := NewExpenseServer(&store)
+
+	t.Run("adds new user", func(t *testing.T) {
+
+		jsonStr := []byte(`{
+			"firstName": "Virginia",
+			"email": "virginia98@example.com"
+		}`)
+
+		request := newCreateUserRequest(jsonStr)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		got := getUserFromResponse(t, response)
+		want := User{
+			3, "Virginia", "", "virginia98@example.com",
+		}
+
+		assertUser(t, got, want)
+		assertContentType(t, response, contentTypeJSON)
+		assertStatusCode(t, response.Code, http.StatusOK)
+	})
+}
+
 func TestGETUsers(t *testing.T) {
 	store := StubExpenseStore{[]User{
 		{1, "Jane", "Doe", "jane.doe@example.com"},
@@ -105,7 +143,7 @@ func TestGETUsers(t *testing.T) {
 	server := NewExpenseServer(&store)
 
 	t.Run("returns list of users as JSON", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/users", nil)
+		request := newGetUsersRequest()
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -126,6 +164,16 @@ func TestGETUsers(t *testing.T) {
 
 func newGetUserRequest(id int) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%d", id), nil)
+	return req
+}
+
+func newCreateUserRequest(jsonStr []byte) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(jsonStr))
+	return req
+}
+
+func newGetUsersRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/users", nil)
 	return req
 }
 

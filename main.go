@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	store, err := NewExpenseStoreSQL()
+	store, err := NewExpenseStoreSQL(prodDB)
 	if err != nil {
 		log.Fatalf("could not connect to db: %v", err)
 	}
