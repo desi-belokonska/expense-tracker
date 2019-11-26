@@ -28,13 +28,13 @@ go get
 Seed initial data (optional):
 
 ```sh
-./run-seed.sh
+scripts/seed.sh
 ```
 
 There is a startup script which simplifies the development process:
 
 ``` sh
-./run-start.sh
+scripts/start.sh
 ```
 
 If everything went right, you should see this in your terminal window:
@@ -47,7 +47,13 @@ You can also set the PORT env variable to something else.
 
 ## Running the tests
 
-To run the tests, simply run
+Seed initial data in test-database (optional):
+
+```sh
+scripts/seed-test.sh
+```
+
+To run the tests, simply run:
 
 ``` sh
 go test
