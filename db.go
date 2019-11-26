@@ -72,7 +72,7 @@ func (es *ExpenseStoreSQL) GetUsers() *SliceResponse {
 	return ur
 }
 
-// NewUser adds a user to the DB and returns the new information as a pointer to a User
+// CreateUser adds a user to the DB and returns the new information as a pointer to a User
 func (es *ExpenseStoreSQL) CreateUser(user User) *User {
 	res, err := es.queries.Exec(es, "create-user", user.FirstName, user.LastName, user.Email)
 
